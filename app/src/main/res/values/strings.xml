@@ -1,3 +1,14 @@
 <resources>
     <string name="app_name">MobileTest</string>
+
+    <string name="no_data">No data</string>
+    <string name="loading">LOADING</string>
+    <string name="loading_task_error">Error while loading booking</string>
+
+    <string name="booking_ship_reference">Ship Reference:</string>
+    <string name="booking_ship_token">Ship Token:</string>
+    <string name="booking_can_issue_ticket_checking">Can Issue Ticket Checking:</string>
+    <string name="booking_expiry_time">Expiry Time:</string>
+    <string name="booking_duration">Duration:</string>
+
 </resources>
