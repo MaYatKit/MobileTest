@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -26,6 +27,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.rememberNestedScrollInteropConnection
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -40,8 +43,6 @@ import com.example.mobiletest.ui.theme.MobileTestTheme
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BookingScreen(
-    @StringRes userMessage: Int,
-    onUserMessageDisplayed: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: BookingViewModel = hiltViewModel(),
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() }
@@ -57,8 +58,8 @@ fun BookingScreen(
         BookingContent(
             loading = uiState.isLoading,
             bookings = uiState.items,
-            pullToRefreshState = state,
             onRefresh = viewModel::refresh,
+            pullToRefreshState = state,
             modifier = Modifier.padding(paddingValues)
         )
 
@@ -87,15 +88,16 @@ private fun BookingContent(
     PullToRefreshBox(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = dimensionResource(id = R.dimen.horizontal_margin)),
-        state = pullToRefreshState,
+            .padding(horizontal = dimensionResource(id = R.dimen.horizontal_margin))
+            .nestedScroll(rememberNestedScrollInteropConnection()),
         onRefresh = onRefresh,
+        state = pullToRefreshState,
         isRefreshing = loading
     ) {
 
         if (bookings.isEmpty()) {
             BookingsEmptyContent(modifier = modifier
-                .fillMaxSize()
+                .wrapContentSize()
                 .padding(horizontal = dimensionResource(id = R.dimen.horizontal_margin)),
                 noBookingsLabel = R.string.no_data,
                 noBookingsIconRes = android.R.drawable.ic_menu_help
@@ -217,7 +219,7 @@ private fun BookingsEmptyContent(
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier.wrapContentSize(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {

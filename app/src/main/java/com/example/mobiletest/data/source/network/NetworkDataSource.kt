@@ -8,5 +8,4 @@ interface NetworkDataSource {
 
     suspend fun loadBookings(): List<NetworkBooking>
 
-    suspend fun saveBookings(tasks: List<NetworkBooking>)
 }

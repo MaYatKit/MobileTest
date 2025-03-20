@@ -19,20 +19,9 @@ interface BookingRepository {
 
     suspend fun refreshBooking(shipToken: String)
 
-    suspend fun createBooking(
-        shipToken: String, shipReference: String,
-        canIssueTicketChecking: Boolean,
-        expiryTime: String,
-        duration: Int,
-    ): String
+    suspend fun insertBooking(newBooking: Booking)
 
-    suspend fun updateBooking(shipToken: String, expiryTime: String)
-
-    suspend fun completeBooking(shipToken: String)
-
-    suspend fun activateBooking(shipToken: String)
-
-    suspend fun clearCompletedBookings()
+    suspend fun updateBooking(newBooking: Booking)
 
     suspend fun deleteAllBookings()
 

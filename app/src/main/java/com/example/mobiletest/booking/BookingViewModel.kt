@@ -1,6 +1,5 @@
 package com.example.mobiletest.booking
 
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.mobiletest.R
@@ -29,9 +28,7 @@ data class BookingsUiState(
  */
 @HiltViewModel
 class BookingViewModel @Inject constructor(
-    private val bookingRepository: BookingRepository,
-    private val savedStateHandle: SavedStateHandle
-) : ViewModel() {
+    private val bookingRepository: BookingRepository) : ViewModel() {
 
     private val _userMessage: MutableStateFlow<Int?> = MutableStateFlow(null)
     private val _isLoading = MutableStateFlow(false)

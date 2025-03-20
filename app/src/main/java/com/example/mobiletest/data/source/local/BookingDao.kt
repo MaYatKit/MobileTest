@@ -31,7 +31,7 @@ interface BookingDao {
 
 
     @Query("SELECT * FROM booking WHERE shipToken = :shipToken")
-    fun observeById(shipToken: String): Flow<LocalBooking>
+    fun observeByShipToken(shipToken: String): Flow<LocalBooking>
 
 
     @Query("SELECT * FROM booking")
