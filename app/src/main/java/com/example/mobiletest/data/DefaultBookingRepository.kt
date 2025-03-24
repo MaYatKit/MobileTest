@@ -7,15 +7,21 @@ import com.example.mobiletest.di.DefaultDispatcher
 import com.example.mobiletest.di.IoDispatcher
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 
-
+/**
+ * Concrete implementation to load tasks from the data sources into a cache.
+ */
 @Singleton
 class DefaultBookingRepository @Inject constructor(
     private val networkDataSource: NetworkDataSource,
@@ -26,35 +32,97 @@ class DefaultBookingRepository @Inject constructor(
 ) : BookingRepository {
 
 
+    /**
+     * Get the tasks from the local data source, return as a flow
+     */
     override fun getBookingsStream(): Flow<List<Booking>> {
-        return localDataSource.observeAll().map { bookings ->
+        return localDataSource.observeAllWithLog().map { bookings ->
             withContext(dispatcher) {
-                bookings.toExternal()
+                val olds = bookings.toExternal()
+                if (olds.isNotEmpty()) {
+                    val result = mutableListOf<Booking>()
+                    olds.forEach { old ->
+                        if (old.expiryTime.toLong() < System.currentTimeMillis()) {
+                            val remoteBooking = networkDataSource.loadBookingByShipToken(old.shipToken)
+                            if (remoteBooking != null) {
+                                if (remoteBooking.shipToken == old.shipToken) {
+                                    updateBooking(remoteBooking.toExternal())
+                                }else {
+                                    localDataSource.deleteByShipTokenWithLog(old.shipToken)
+                                    localDataSource.upsertWithLog(remoteBooking.toLocal())
+                                }
+                                result.add(remoteBooking.toExternal())
+                            }
+                        }else {
+                            result.add(old)
+                        }
+                    }
+                    result
+                }else {
+                   val remoteBookings = networkDataSource.loadBookings()
+                    localDataSource.upsertAll(remoteBookings.toLocal())
+                    remoteBookings.toExternal()
+                }
             }
         }
     }
 
+    /**
+     * Get the tasks from the local data source, blocking the current thread
+     *
+     */
     override suspend fun getBookings(forceUpdate: Boolean): List<Booking> {
-        if (forceUpdate) {
-            refresh()
+        val result = scope.async(Dispatchers.IO) {
+            val olds = localDataSource.getAllWithLog().toExternal()
+            if (olds.isNotEmpty()) {
+                val result = mutableListOf<Booking>()
+                olds.forEach { old ->
+                    if (old.expiryTime.toLong() < System.currentTimeMillis() || forceUpdate) {
+                        val remoteBooking = networkDataSource.loadBookingByShipToken(old.shipToken)
+                        if (remoteBooking != null) {
+                            if (remoteBooking.shipToken == old.shipToken) {
+                                updateBooking(remoteBooking.toExternal())
+                            }else {
+                                localDataSource.deleteByShipTokenWithLog(old.shipToken)
+                                localDataSource.upsertWithLog(remoteBooking.toLocal())
+                            }
+                            result.add(remoteBooking.toExternal())
+                        }
+                    }else {
+                        result.add(old)
+                    }
+                }
+                return@async result
+            }else {
+                val remoteBookings = networkDataSource.loadBookings()
+                localDataSource.upsertAll(remoteBookings.toLocal())
+                return@async remoteBookings.toExternal()
+            }
         }
-        return withContext(dispatcher) {
-            localDataSource.getAll().toExternal()
-        }
+        return result.await()
     }
 
+    /**
+     * Refresh the tasks from the network and replace the existing ones in the database
+     */
     override suspend fun refresh() {
         withContext(ioDispatcher) {
             val remoteBookings = networkDataSource.loadBookings()
-            localDataSource.deleteAll()
+            localDataSource.deleteAllWithLog()
             localDataSource.upsertAll(remoteBookings.toLocal())
         }
     }
 
+    /**
+     * Get the tasks from the local data source, blocking the current thread
+     */
     override fun getBookingStream(shipToken: String): Flow<Booking?> {
         return localDataSource.observeByShipToken(shipToken).map { it.toExternal() }
     }
 
+    /**
+     * Get the tasks from the local data source, blocking the current thread
+     */
     override suspend fun getBooking(
         shipToken: String,
         forceUpdate: Boolean
@@ -65,14 +133,23 @@ class DefaultBookingRepository @Inject constructor(
         return localDataSource.getByShipToken(shipToken)?.toExternal()
     }
 
+    /**
+     * Refresh the tasks from the network and replace the existing ones in the database
+     */
     override suspend fun refreshBooking(shipToken: String) {
         refresh()
     }
 
+    /**
+     * Insert or update a task in the database.
+     */
     override suspend fun insertBooking(newBooking: Booking) {
-        localDataSource.upsert(newBooking.toLocal())
+        localDataSource.upsertWithLog(newBooking.toLocal())
     }
 
+    /**
+     * Update the task in the local data source
+     */
     override suspend fun updateBooking(newBooking: Booking) {
         val booking = getBooking(newBooking.shipToken)?.copy(
             shipReference = newBooking.shipReference,
@@ -82,16 +159,22 @@ class DefaultBookingRepository @Inject constructor(
         ) ?: throw Exception("Booking (shipToken ${newBooking.shipToken}) " +
                 "not found, please insert it")
 
-        localDataSource.upsert(booking.toLocal())
+        localDataSource.upsertWithLog(booking.toLocal())
     }
 
 
+    /**
+     * Delete all tasks in the database
+     */
     override suspend fun deleteAllBookings() {
-        localDataSource.deleteAll()
+        localDataSource.deleteAllWithLog()
     }
 
+    /**
+     * Delete the task by id from the database
+     */
     override suspend fun deleteBooking(shipToken: String) {
-        localDataSource.deleteByShipToken(shipToken)
+        localDataSource.deleteByShipTokenWithLog(shipToken)
     }
 
 

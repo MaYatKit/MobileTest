@@ -1,5 +1,6 @@
 package com.example.mobiletest.booking
 
+import android.util.Log
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
@@ -10,7 +11,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -27,8 +31,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.rememberNestedScrollInteropConnection
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -63,16 +65,12 @@ fun BookingScreen(
             modifier = Modifier.padding(paddingValues)
         )
 
-        // Check for user messages to display on the screen
-        uiState.userMessage?.let { message ->
-            val snackbarText = stringResource(message)
-            LaunchedEffect(snackbarHostState, viewModel, message, snackbarText) {
-                snackbarHostState.showSnackbar(snackbarText)
-                viewModel.snackbarMessageShown()
+        uiState.loadingError?.let { error ->
+            val message = stringResource(error)
+            LaunchedEffect(snackbarHostState, viewModel, message) {
+                snackbarHostState.showSnackbar(message)
             }
         }
-
-
     }
 }
 
@@ -86,36 +84,30 @@ private fun BookingContent(
     modifier: Modifier = Modifier
 ) {
     PullToRefreshBox(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(horizontal = dimensionResource(id = R.dimen.horizontal_margin))
-            .nestedScroll(rememberNestedScrollInteropConnection()),
+        modifier = modifier.fillMaxSize()
+            .padding(horizontal = dimensionResource(id = R.dimen.horizontal_margin)),
         onRefresh = onRefresh,
-        state = pullToRefreshState,
-        isRefreshing = loading
+        isRefreshing = loading,
+        state = pullToRefreshState
     ) {
-
+        Log.d("loading = ", loading.toString())
         if (bookings.isEmpty()) {
             BookingsEmptyContent(modifier = modifier
-                .wrapContentSize()
+                .fillMaxSize().verticalScroll(rememberScrollState())
                 .padding(horizontal = dimensionResource(id = R.dimen.horizontal_margin)),
                 noBookingsLabel = R.string.no_data,
-                noBookingsIconRes = android.R.drawable.ic_menu_help
-            )
+                noBookingsIconRes = android.R.drawable.ic_menu_help)
         }else {
             val booking = bookings[0]
             Column(
                 modifier = modifier
-                    .fillMaxSize()
+                    .fillMaxSize().verticalScroll(rememberScrollState())
                     .padding(horizontal = dimensionResource(id = R.dimen.horizontal_margin))
             ) {
-                Row (modifier = modifier.fillMaxWidth()) {
+                Row (modifier = modifier.fillMaxWidth().wrapContentHeight()) {
                     Text(
                         text = stringResource(R.string.booking_ship_token),
-                        modifier = Modifier.padding(
-                            horizontal = dimensionResource(id = R.dimen.list_item_padding),
-                            vertical = dimensionResource(id = R.dimen.vertical_margin)
-                        ),
+                        modifier = Modifier.wrapContentSize(),
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Text(
@@ -123,18 +115,15 @@ private fun BookingContent(
                         modifier = Modifier.padding(
                             horizontal = dimensionResource(id = R.dimen.list_item_padding),
                             vertical = dimensionResource(id = R.dimen.vertical_margin)
-                        ),
+                        ).wrapContentSize(),
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
 
-                Row (modifier = modifier.fillMaxWidth()) {
+                Row (modifier = modifier.fillMaxWidth().wrapContentHeight()) {
                     Text(
                         text = stringResource(R.string.booking_ship_reference),
-                        modifier = Modifier.padding(
-                            horizontal = dimensionResource(id = R.dimen.list_item_padding),
-                            vertical = dimensionResource(id = R.dimen.vertical_margin)
-                        ),
+                        modifier = Modifier.wrapContentSize(),
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Text(
@@ -142,18 +131,15 @@ private fun BookingContent(
                         modifier = Modifier.padding(
                             horizontal = dimensionResource(id = R.dimen.list_item_padding),
                             vertical = dimensionResource(id = R.dimen.vertical_margin)
-                        ),
+                        ).wrapContentSize(),
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
 
-                Row (modifier = modifier.fillMaxWidth()) {
+                Row (modifier = modifier.fillMaxWidth().wrapContentHeight()) {
                     Text(
                         text = stringResource(R.string.booking_can_issue_ticket_checking),
-                        modifier = Modifier.padding(
-                            horizontal = dimensionResource(id = R.dimen.list_item_padding),
-                            vertical = dimensionResource(id = R.dimen.vertical_margin)
-                        ),
+                        modifier = Modifier.wrapContentSize(),
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Text(
@@ -161,18 +147,15 @@ private fun BookingContent(
                         modifier = Modifier.padding(
                             horizontal = dimensionResource(id = R.dimen.list_item_padding),
                             vertical = dimensionResource(id = R.dimen.vertical_margin)
-                        ),
+                        ).wrapContentSize(),
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
 
-                Row (modifier = modifier.fillMaxWidth()) {
+                Row (modifier = modifier.fillMaxWidth().wrapContentHeight()) {
                     Text(
                         text = stringResource(R.string.booking_expiry_time),
-                        modifier = Modifier.padding(
-                            horizontal = dimensionResource(id = R.dimen.list_item_padding),
-                            vertical = dimensionResource(id = R.dimen.vertical_margin)
-                        ),
+                        modifier = Modifier.wrapContentSize(),
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Text(
@@ -180,18 +163,15 @@ private fun BookingContent(
                         modifier = Modifier.padding(
                             horizontal = dimensionResource(id = R.dimen.list_item_padding),
                             vertical = dimensionResource(id = R.dimen.vertical_margin)
-                        ),
+                        ).wrapContentSize(),
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
 
-                Row (modifier = modifier.fillMaxWidth()) {
+                Row (modifier = modifier.fillMaxWidth().wrapContentHeight()) {
                     Text(
                         text = stringResource(R.string.booking_duration),
-                        modifier = Modifier.padding(
-                            horizontal = dimensionResource(id = R.dimen.list_item_padding),
-                            vertical = dimensionResource(id = R.dimen.vertical_margin)
-                        ),
+                        modifier = Modifier.wrapContentSize(),
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Text(
@@ -199,12 +179,10 @@ private fun BookingContent(
                         modifier = Modifier.padding(
                             horizontal = dimensionResource(id = R.dimen.list_item_padding),
                             vertical = dimensionResource(id = R.dimen.vertical_margin)
-                        ),
+                        ).wrapContentSize(),
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
-
-
             }
         }
 
@@ -235,7 +213,7 @@ private fun BookingsEmptyContent(
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview
 @Composable
-private fun TasksContentPreview() {
+private fun BookingsContentPreview() {
     MaterialTheme {
         Surface {
             BookingContent(
@@ -259,7 +237,7 @@ private fun TasksContentPreview() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview
 @Composable
-private fun TasksContentEmptyPreview() {
+private fun BookingsContentEmptyPreview() {
     MaterialTheme {
         Surface {
             BookingContent(
@@ -274,7 +252,7 @@ private fun TasksContentEmptyPreview() {
 
 @Preview
 @Composable
-private fun TasksEmptyContentPreview() {
+private fun BookingsEmptyContentPreview() {
     MobileTestTheme {
         Surface {
             BookingsEmptyContent(

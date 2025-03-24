@@ -1,33 +1,31 @@
-/*
- * Copyright 2019 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package com.example.mobiletest.data.source.local
 
+import android.util.Log
 import androidx.room.Dao
 import androidx.room.Query
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.onEach
 
 
 @Dao
 interface BookingDao {
 
+    companion object {
+        const val TAG = "BookingDao"
+    }
 
     @Query("SELECT * FROM booking")
     fun observeAll(): Flow<List<LocalBooking>>
+
+    fun observeAllWithLog(): Flow<List<LocalBooking>> {
+        return observeAll().onEach { it ->
+            Log.d(TAG, "read all bookings from database: ")
+            it.forEach {
+                Log.d(TAG, "expiryTime = ${it.expiryTime}")
+            }
+        }
+    }
 
 
     @Query("SELECT * FROM booking WHERE shipToken = :shipToken")
@@ -37,6 +35,13 @@ interface BookingDao {
     @Query("SELECT * FROM booking")
     suspend fun getAll(): List<LocalBooking>
 
+    suspend fun getAllWithLog(): List<LocalBooking> {
+        return getAll().onEach { it ->
+            Log.d(TAG, "read all bookings from database: ")
+            Log.d(TAG, "expiryTime = ${it.expiryTime}")
+        }
+    }
+
 
     @Query("SELECT * FROM booking WHERE shipToken = :shipToken")
     suspend fun getByShipToken(shipToken: String): LocalBooking?
@@ -44,6 +49,11 @@ interface BookingDao {
 
     @Upsert
     suspend fun upsert(booking: LocalBooking)
+
+    suspend fun upsertWithLog(booking: LocalBooking) {
+        Log.d(TAG, "update/insert booking from database, shipToken = ${booking.shipToken}")
+        upsert(booking)
+    }
 
 
     @Upsert
@@ -53,9 +63,19 @@ interface BookingDao {
     @Query("DELETE FROM booking WHERE shipToken = :shipToken")
     suspend fun deleteByShipToken(shipToken: String): Int
 
+    suspend fun deleteByShipTokenWithLog(shipToken: String) {
+        Log.d(TAG, "delete booking by shipToken from database, shipToken = $shipToken")
+        deleteByShipToken(shipToken)
+    }
+
 
     @Query("DELETE FROM booking")
     suspend fun deleteAll()
+
+    suspend fun deleteAllWithLog() {
+        Log.d(TAG, "delete all bookings from database")
+        deleteAll()
+    }
 
 
 }

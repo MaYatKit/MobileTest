@@ -58,3 +58,10 @@ fun NetworkBooking.toLocal() = LocalBooking(
 @JvmName("networkToLocal")
 fun List<NetworkBooking>.toLocal() = map(NetworkBooking::toLocal)
 
+
+// Network to External
+fun NetworkBooking.toExternal() = toLocal().toExternal()
+
+@JvmName("networkToExternal")
+fun List<NetworkBooking>.toExternal() = map(NetworkBooking::toExternal)
+

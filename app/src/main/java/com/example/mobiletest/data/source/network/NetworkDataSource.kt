@@ -8,4 +8,6 @@ interface NetworkDataSource {
 
     suspend fun loadBookings(): List<NetworkBooking>
 
+    suspend fun loadBookingByShipToken(shipToken: String): NetworkBooking?
+
 }
