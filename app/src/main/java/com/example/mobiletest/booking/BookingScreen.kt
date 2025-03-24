@@ -226,7 +226,8 @@ private fun BookingsContentPreview() {
                         shipReference = "ship Reference 1",
                         canIssueTicketChecking = true,
                         expiryTime = "10pm",
-                        duration = 10
+                        duration = 10,
+                        segments = emptyList()
                     )
                 ),
             )

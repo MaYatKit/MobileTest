@@ -2,12 +2,28 @@ package com.example.mobiletest.data
 
 
 data class Booking(
+    val shipReference: String,
     val shipToken: String,
-    var shipReference: String,
-    var canIssueTicketChecking: Boolean,
-    var expiryTime: String,
-    var duration: Int,
-) {
+    val canIssueTicketChecking: Boolean,
+    val expiryTime: String,
+    val duration: Int,
+    val segments: List<BookingSegment>
+)
 
+data class BookingSegment(
+    val id: Int,
+    val originAndDestinationPair: OriginAndDestinationPair
+)
 
-}
+data class OriginAndDestinationPair(
+    val destination: Place,
+    val destinationCity: String,
+    val origin: Place,
+    val originCity: String
+)
+
+data class Place(
+    val code: String,
+    val displayName: String,
+    val url: String
+)

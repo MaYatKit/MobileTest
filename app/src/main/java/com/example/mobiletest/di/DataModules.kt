@@ -45,7 +45,7 @@ object DatabaseModule {
             context.applicationContext,
             BookingDatabase::class.java,
             "Booking.db"
-        ).build()
+        ).fallbackToDestructiveMigration().build()
     }
 
     @Provides
